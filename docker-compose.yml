@@ -1,0 +1,31 @@
+version: '3'
+networks:
+  gmail-gettt:
+    driver: bridge
+  caddywork:
+    external:
+      name: caddywork
+
+
+services:
+  gmail-gettt:
+    container_name: gmail-gettt
+    image: gmail-gettt
+    build:
+      context: .
+    environment:
+      - SERVER_URL=https://gettt.viti.site
+    volumes:
+      - ./oauth_client.json:/app/oauth_client.json
+    networks:
+      - caddywork
+      - gmail-gettt
+
+  redis:
+    container_name: gmail-gettt-redis
+    image: redis
+    volumes:
+      - ./db:/data
+    networks:
+      - gmail-gettt
+    command: redis-server --appendonly yes
