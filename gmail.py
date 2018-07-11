@@ -18,6 +18,23 @@ app = Flask(__name__)
 db = Redpie(1, 'redis')
 
 
+def get_email_body(message):
+    new_element = {}
+    if 'attachmentId' not in message['payload']['body']:
+        if 'parts' not in message['payload']:
+            decoded_body = base64.urlsafe_b64decode(message['payload']['body']['data']).decode('utf-8')
+            new_element[message['payload']['mimeType']] = decoded_body
+        else:
+            for each in message['payload']['parts']:
+                if 'parts' not in each['body']:
+                    new_element[each['mimeType']] = get_email_body({'payload': each})
+                else:
+                    decoded_body = base64.urlsafe_b64decode(each['body']['data']).decode('utf-8')
+                    new_element[each['mimeType']] = decoded_body
+
+    return new_element
+
+
 def do_refresh_token(id):
     auth = db[id]
     credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(auth)
@@ -115,11 +132,7 @@ def get_last_email():
     for m_id in message_ids:
         message = service.users().messages().get(userId='me', id=m_id).execute()
 
-        new_element = {}
-        for each in message['payload']['parts']:
-            decoded_body = base64.urlsafe_b64decode(each['body']['data']).decode('utf-8')
-            new_element[each['mimeType']] = decoded_body
-
+        new_element = get_email_body(message)
         messages.append(new_element)
 
     return jsonify(messages)
