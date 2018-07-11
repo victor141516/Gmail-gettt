@@ -27,7 +27,7 @@ def get_email_body(message):
         else:
             for each in message['payload']['parts']:
                 if 'parts' not in each['body']:
-                    new_element[each['mimeType']] = get_email_body({'payload': each})
+                    new_element = get_email_body({'payload': each})
                 else:
                     decoded_body = base64.urlsafe_b64decode(each['body']['data']).decode('utf-8')
                     new_element[each['mimeType']] = decoded_body
