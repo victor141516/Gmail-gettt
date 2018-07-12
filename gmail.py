@@ -14,7 +14,7 @@ SERVER_URL = os.environ['SERVER_URL']
 API_SCOPE = ['https://www.googleapis.com/auth/gmail.readonly']
 JSON_FILE = 'oauth_client.json'
 REDIRECT_URI = f'{SERVER_URL}/oauth2/callback/'
-app = Flask(__name__)
+app = Flask(__name__, static_folder=".")
 db = Redpie(1, 'redis')
 
 
