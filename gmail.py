@@ -137,9 +137,15 @@ def get_last_email():
 
     return jsonify(messages)
 
+
 @app.route('/')
 def redirect_to_oauth():
     return redirect('/oauth2')
+
+
+@app.route('/privacy')
+def privacy():
+    return app.send_static_file('privacy_policy.html')
 
 
 if __name__ == '__main__':
