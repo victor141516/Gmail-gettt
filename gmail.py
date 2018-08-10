@@ -108,8 +108,26 @@ def delete_token():
     return 'OK'
 
 
-@app.route('/get')
+@app.route('/last')
 def get_last_email():
+    id = request.args.get('t')
+    if id not in db:
+        return abort(401)
+
+    auth = do_refresh_token(id)
+    if auth == 0:
+        return abort(401)
+
+    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(auth)
+    service = build('gmail', 'v1', credentials=credentials)
+    message_list = service.users().messages().list(userId='me', maxResults=1).execute()
+    m_id = message_list['messages'][0]['id']
+    message = service.users().messages().get(userId='me', id=m_id).execute()
+    return jsonify(get_email_body(message))
+
+
+@app.route('/get')
+def get_emails():
     id = request.args.get('t')
     search_term = request.args.get('q')
     no_results = int(request.args.get('n', 1))
