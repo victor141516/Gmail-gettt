@@ -22,14 +22,16 @@ def get_email_body(message):
     new_element = {}
     if 'attachmentId' not in message['payload']['body']:
         if 'parts' not in message['payload']:
-            decoded_body = base64.urlsafe_b64decode(message['payload']['body']['data']).decode('utf-8')
+            decoded_body = base64.urlsafe_b64decode(
+                message['payload']['body']['data']).decode('utf-8')
             new_element[message['payload']['mimeType']] = decoded_body
         else:
             for each in message['payload']['parts']:
                 if 'parts' not in each['body']:
                     new_element = get_email_body({'payload': each})
                 else:
-                    decoded_body = base64.urlsafe_b64decode(each['body']['data']).decode('utf-8')
+                    decoded_body = base64.urlsafe_b64decode(
+                        each['body']['data']).decode('utf-8')
                     new_element[each['mimeType']] = decoded_body
 
     return new_element
@@ -37,7 +39,8 @@ def get_email_body(message):
 
 def do_refresh_token(id):
     auth = db[id]
-    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(auth)
+    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(
+        auth)
     request = google.auth.transport.requests.Request()
     try:
         credentials.refresh(request)
@@ -53,7 +56,7 @@ def do_refresh_token(id):
         'client_id': credentials.client_id,
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes,
-        'expiry': datetime.datetime.strftime(credentials.expiry,'%Y-%m-%d %H:%M:%S')
+        'expiry': datetime.datetime.strftime(credentials.expiry, '%Y-%m-%d %H:%M:%S')
     }
     db[id] = auth
     return auth
@@ -67,7 +70,8 @@ def oauth2_callback():
         scopes=API_SCOPE,
         state=state)
     flow.redirect_uri = REDIRECT_URI
-    flow.fetch_token(authorization_response=request.url.replace('http://', 'https://'))
+    flow.fetch_token(
+        authorization_response=request.url.replace('http://', 'https://'))
     credentials = flow.credentials
     auth = {
         'token': credentials.token,
@@ -77,7 +81,7 @@ def oauth2_callback():
         'client_id': credentials.client_id,
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes,
-        'expiry': datetime.datetime.strftime(credentials.expiry,'%Y-%m-%d %H:%M:%S')
+        'expiry': datetime.datetime.strftime(credentials.expiry, '%Y-%m-%d %H:%M:%S')
     }
     id = str(uuid4())
     db[id] = auth
@@ -87,7 +91,8 @@ def oauth2_callback():
 @app.route('/oauth2')
 def oauth2_start():
     new_email = request.args.get('e')
-    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(JSON_FILE, scopes=API_SCOPE)
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        JSON_FILE, scopes=API_SCOPE)
     flow.redirect_uri = REDIRECT_URI
 
     authorization_url, state = flow.authorization_url(
@@ -118,12 +123,23 @@ def get_last_email():
     if auth == 0:
         return abort(401)
 
-    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(auth)
+    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(
+        auth)
     service = build('gmail', 'v1', credentials=credentials)
-    message_list = service.users().messages().list(userId='me', maxResults=1).execute()
+    message_list = service.users().messages().list(
+        userId='me', maxResults=1).execute()
     m_id = message_list['messages'][0]['id']
     message = service.users().messages().get(userId='me', id=m_id).execute()
-    return jsonify(get_email_body(message))
+
+    email_body = get_email_body(message)
+    return_text = email_body.get(
+        'text/html', email_body.get(
+            'text/plain', email_body.get(
+                list(email_body.keys())[0]
+            )
+        )
+    )
+    return return_text
 
 
 @app.route('/get')
@@ -141,10 +157,12 @@ def get_emails():
     if auth == 0:
         return abort(401)
 
-    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(auth)
+    credentials = google.oauth2.credentials.Credentials.from_authorized_user_info(
+        auth)
     service = build('gmail', 'v1', credentials=credentials)
 
-    message_list = service.users().messages().list(userId='me', maxResults=no_results, q=search_term).execute()
+    message_list = service.users().messages().list(
+        userId='me', maxResults=no_results, q=search_term).execute()
     message_ids = [m['id'] for m in message_list['messages']]
     messages = []
     for m_id in message_ids:
