@@ -7,7 +7,7 @@ import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
 import os
 from uuid import uuid4
-from Redpie.redpie import Redpie
+from redpie import Redpie
 
 
 SERVER_URL = os.environ['SERVER_URL']
