@@ -132,6 +132,9 @@ def get_last_email():
     message = service.users().messages().get(userId='me', id=m_id).execute()
 
     email_body = get_email_body(message)
+    if email_body == {}:
+        return 'Last email has no text'
+
     return_text = email_body.get(
         'text/html', email_body.get(
             'text/plain', email_body.get(
